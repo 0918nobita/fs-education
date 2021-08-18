@@ -23,69 +23,64 @@ let commonMetaTags =
       meta [ _name "viewport"
              _content "width=device-width,initial-scale=1" ] ]
 
-let genPageInfo () : PageInfo seq =
-    Directory.EnumerateFiles "pages"
-    |> Seq.map
-        (fun markdownPath ->
-            let baseName =
-                Path.GetFileNameWithoutExtension markdownPath
+let genSinglePageInfoAsync (markdownPath: string) =
+    asyncResult {
+        let baseName =
+            Path.GetFileNameWithoutExtension markdownPath
 
-            let groups =
-                (Regex("^([0-9]+)-").Match baseName).Groups
+        let groups =
+            (Regex("^([0-9]+)-").Match baseName).Groups
 
-            if Seq.length groups <> 2 then
-                failwith $"%s{markdownPath}: The file name format is invalid"
+        if Seq.length groups <> 2 then
+            return! Error $"%s{markdownPath}: The file name format is invalid"
 
-            let pageNumber = int groups.[1].Value
+        let pageNumber = int groups.[1].Value
 
-            let htmlFileName = $"%s{baseName}.html"
-            let htmlPath = Path.Combine("build", htmlFileName)
-            let markdownText = File.ReadAllText markdownPath
-            let markdownAst = Markdown.Parse markdownText
+        let htmlFileName = $"%s{baseName}.html"
+        let htmlPath = Path.Combine("build", htmlFileName)
+        let markdownText = File.ReadAllText markdownPath
+        let markdownAst = Markdown.Parse markdownText
 
-            if Seq.isEmpty markdownAst then
-                failwith $"%s{markdownPath}: No block found"
+        if Seq.isEmpty markdownAst then
+            return! Error $"%s{markdownPath}: No block found"
 
-            let pageTitle =
-                match markdownAst.[0] with
-                | :? Syntax.HeadingBlock as headingBlock ->
-                    match headingBlock.Inline with
-                    | null -> failwith $"%s{markdownPath}: Failed to get ContainerInline"
-                    | containerInline ->
-                        match containerInline.FirstChild with
-                        | null -> failwith $"%s{markdownPath}: Failed to get ContainerInline.FirstChild"
-                        | firstChild -> string firstChild
-                | _ -> failwith $"%s{markdownPath}: Page title is not set"
+        let! pageTitle =
+            match markdownAst.[0] with
+            | :? Syntax.HeadingBlock as headingBlock ->
+                match headingBlock.Inline with
+                | null -> Error $"%s{markdownPath}: Failed to get ContainerInline"
+                | containerInline ->
+                    match containerInline.FirstChild with
+                    | null -> Error $"%s{markdownPath}: Failed to get ContainerInline.FirstChild"
+                    | firstChild -> Ok(string firstChild)
+            | _ -> Error $"%s{markdownPath}: Page title is not set"
 
-            let htmlContent =
-                html [] [
-                    head
-                        []
-                        (commonMetaTags
-                         @ [ title [] [
-                                 str $"%s{pageTitle} | %s{siteName}"
-                             ] ])
-                    body [] [
-                        rawText (Markdown.ToHtml markdownAst)
-                    ]
+        let htmlContent =
+            html [] [
+                head
+                    []
+                    (commonMetaTags
+                     @ [ title [] [
+                             str $"%s{pageTitle} | %s{siteName}"
+                         ] ])
+                body [] [
+                    rawText (Markdown.ToHtml markdownAst)
                 ]
+            ]
 
+        return
             { PageNumber = pageNumber
               MarkdownPath = markdownPath
               HtmlPath = htmlPath
               PublicPath = htmlFileName
               Title = pageTitle
-              HtmlContent = htmlContent })
+              HtmlContent = htmlContent }
+
+    }
 
 let writePageAsync (page: PageInfo) =
     File.WriteAllTextAsync(page.HtmlPath, RenderView.AsString.htmlDocument page.HtmlContent)
     |> Async.AwaitTask
-
-let writePagesAsync (pages: PageInfo seq) =
-    pages
-    |> Seq.map writePageAsync
-    |> Async.Parallel
-    |> Async.map ignore
 
 let writeIndexPageAsync (pages: PageInfo seq) =
     let liNodes =
@@ -112,13 +107,36 @@ let writeIndexPageAsync (pages: PageInfo seq) =
         File.WriteAllText("build/index.html", RenderView.AsString.htmlDocument content)
     }
 
+let sumResultSeq (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
+    resSeq
+    |> Seq.fold
+        (fun s a ->
+            match s, a with
+            | Ok arr, Ok v -> Ok(Seq.append arr (Seq.singleton v))
+            | Ok _, Error e -> Error(Seq.singleton e)
+            | Error es, Ok _ -> Error es
+            | Error es, Error e -> Error(Seq.append es (Seq.singleton e)))
+        (Ok Seq.empty)
+
 let () =
     Directory.CreateDirectory "build" |> ignore
 
-    let pages = genPageInfo ()
+    let res =
+        Directory.EnumerateFiles "pages"
+        |> Seq.map genSinglePageInfoAsync
+        |> Async.Parallel
+        |> Async.RunSynchronously
+        |> sumResultSeq
 
-    [ writePagesAsync pages
-      writeIndexPageAsync pages ]
-    |> Async.Parallel
-    |> Async.RunSynchronously
-    |> ignore
+    match res with
+    | Ok (pages) ->
+        pages
+        |> Seq.map writePageAsync
+        |> Seq.toList
+        |> List.append [ writeIndexPageAsync pages ]
+        |> Async.Parallel
+        |> Async.RunSynchronously
+        |> ignore
+    | Error (msgs) ->
+        msgs |> Seq.iter (eprintfn "%s")
+        exit 1
