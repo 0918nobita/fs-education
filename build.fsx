@@ -83,7 +83,7 @@ let writePageAsync (page: PageInfo) =
 
 let writePagesAsync (pages: PageInfo seq) =
     pages
-    |> Seq.map (writePageAsync)
+    |> Seq.map writePageAsync
     |> Async.Parallel
     |> Async.map ignore
 
