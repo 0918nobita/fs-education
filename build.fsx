@@ -1,120 +1,124 @@
 #r "nuget: FsToolkit.ErrorHandling, 2.7.0"
+#r "nuget: Giraffe.ViewEngine"
 #r "nuget: Markdig, 0.25.0"
 
 open System.IO
 open System.Text.RegularExpressions
 open FsToolkit.ErrorHandling
+open Giraffe.ViewEngine
 open Markdig
 
-let compileAsync (inputPath: string) (outputPath: string) : Async<Result<unit, string>> =
-    asyncResult {
-        let text = File.ReadAllText inputPath
+type PageInfo =
+    { PageNumber: int
+      MarkdownPath: string
+      HtmlPath: string
+      PublicPath: string
+      Title: string
+      HtmlContent: XmlNode }
 
-        let doc = Markdown.Parse text
-        if Seq.isEmpty doc then return! Error $"{inputPath}: No block found"
+let siteName = "プログラミングをはじめよう"
 
-        let! (mdAst, title) =
-            match doc.[0] with
-            | :? Syntax.HeadingBlock as headingBlock ->
-                match headingBlock.Inline with
-                | null -> Error $"{inputPath}: Failed to get ContainerInline"
-                | containerInline ->
-                    match containerInline.FirstChild with
-                    | null -> Error $"{inputPath}: Failed to get ContainerInline.FirstChild"
-                    | firstChild -> Ok (doc, string firstChild)
-            | _ -> Error $"{inputPath}: Page title is not set"
+let commonMetaTags =
+    [ meta [ _charset "utf-8" ]
+      meta [ _name "viewport"
+             _content "width=device-width,initial-scale=1" ] ]
 
-        let content = Markdown.ToHtml mdAst
-        let html = $"""<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<title>{title} | プログラミングをはじめよう</title>
-</head>
-<body>
-{content}</body>
-</html>
-"""
-        File.WriteAllText (outputPath, html)
+let genPageInfo () : PageInfo seq =
+    Directory.EnumerateFiles "pages"
+    |> Seq.map
+        (fun markdownPath ->
+            let baseName =
+                Path.GetFileNameWithoutExtension markdownPath
+
+            let groups =
+                (Regex("^([0-9]+)-").Match baseName).Groups
+
+            if Seq.length groups <> 2 then
+                failwith $"%s{markdownPath}: The file name format is invalid"
+
+            let pageNumber = int groups.[1].Value
+
+            let htmlFileName = $"%s{baseName}.html"
+            let htmlPath = Path.Combine("build", htmlFileName)
+            let markdownText = File.ReadAllText markdownPath
+            let markdownAst = Markdown.Parse markdownText
+
+            if Seq.isEmpty markdownAst then
+                failwith $"%s{markdownPath}: No block found"
+
+            let pageTitle =
+                match markdownAst.[0] with
+                | :? Syntax.HeadingBlock as headingBlock ->
+                    match headingBlock.Inline with
+                    | null -> failwith $"%s{markdownPath}: Failed to get ContainerInline"
+                    | containerInline ->
+                        match containerInline.FirstChild with
+                        | null -> failwith $"%s{markdownPath}: Failed to get ContainerInline.FirstChild"
+                        | firstChild -> string firstChild
+                | _ -> failwith $"%s{markdownPath}: Page title is not set"
+
+            let htmlContent =
+                html [] [
+                    head
+                        []
+                        (commonMetaTags
+                         @ [ title [] [
+                                 str $"%s{pageTitle} | %s{siteName}"
+                             ] ])
+                    body [] [
+                        rawText (Markdown.ToHtml markdownAst)
+                    ]
+                ]
+
+            { PageNumber = pageNumber
+              MarkdownPath = markdownPath
+              HtmlPath = htmlPath
+              PublicPath = htmlFileName
+              Title = pageTitle
+              HtmlContent = htmlContent })
+
+let writePageAsync (page: PageInfo) =
+    File.WriteAllTextAsync(page.HtmlPath, RenderView.AsString.htmlDocument page.HtmlContent)
+    |> Async.AwaitTask
+
+let writePagesAsync (pages: PageInfo seq) =
+    pages
+    |> Seq.map (writePageAsync)
+    |> Async.Parallel
+    |> Async.map ignore
+
+let writeIndexPageAsync (pages: PageInfo seq) =
+    let liNodes =
+        pages
+        |> Seq.toList
+        |> List.map
+            (fun page ->
+                li [] [
+                    a [ _href page.PublicPath ] [
+                        str page.Title
+                    ]
+                ])
+
+    async {
+        let content =
+            html [] [
+                head [] (commonMetaTags @ [ title [] [ str siteName ] ])
+                body [] [
+                    h1 [] [ str siteName ]
+                    ul [] liNodes
+                ]
+            ]
+
+        File.WriteAllText("build/index.html", RenderView.AsString.htmlDocument content)
     }
 
-let sumResultSeq (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
-    resSeq
-    |> Seq.fold
-        (fun s a ->
-            match s, a with
-            | Ok arr,   Ok v ->    Ok (Seq.append arr (Seq.singleton v))
-            | Ok _,     Error e -> Error (Seq.singleton e)
-            | Error es, Ok _ ->    Error es
-            | Error es, Error e -> Error (Seq.append es (Seq.singleton e)))
-        (Ok Seq.empty)
+let () =
+    Directory.CreateDirectory "build" |> ignore
 
-Directory.CreateDirectory "build"
+    let pages = genPageInfo ()
 
-let tryGetPageNumber (filename : string) =
-    let m = Regex("^([0-9]+)-").Match filename
-    if m.Groups.Count = 2
-    then
-        m.Groups.[1].Value
-        |> int
-        |> Some
-    else
-        None
-
-let mdFiles = Directory.EnumerateFiles "pages"
-
-let genIndexHtmlAsync =
-    asyncResult {
-        let htmlFiles =
-            mdFiles
-            |> Seq.map
-                (Path.GetFileNameWithoutExtension
-                >> sprintf "%s.html")
-        let liTags =
-            htmlFiles
-            |> Seq.sortWith (fun a b ->
-                option {
-                    let! aPageNum = tryGetPageNumber a
-                    let! bPageNum = tryGetPageNumber b
-                    return aPageNum - bPageNum
-                }
-                |> Option.defaultValue 0)
-            |> Seq.map (fun file -> (sprintf """<li><a href="%s">%s</a></li>""") file file)
-            |> String.concat ""
-        let html = $"""<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<title>プログラミングをはじめよう</title>
-</head>
-<body>
-<h1>プログラミングをはじめよう</h1>
-<ul>{liTags}</ul>
-</body>
-</html>
-"""
-        File.WriteAllText ("build/index.html", html)
-    }
-
-let res =
-    mdFiles
-    |> Seq.map (
-        (fun inputPath ->
-            let outputPath =
-                inputPath
-                |> Path.GetFileNameWithoutExtension
-                |> sprintf "%s.html"
-                |> fun filename -> Path.Combine ("build", filename)
-            (inputPath, outputPath))
-        >> (fun (inputPath, outputPath) -> compileAsync inputPath outputPath))
-    |> Seq.append (Seq.singleton genIndexHtmlAsync)
+    [ writePagesAsync pages
+      writeIndexPageAsync pages ]
     |> Async.Parallel
     |> Async.RunSynchronously
-    |> sumResultSeq
-
-exit
-    (match res with
-    | Ok(_) -> 0
-    | Error(msgs) ->
-        msgs |> Seq.iter (eprintfn "%s")
-        1)
+    |> ignore
