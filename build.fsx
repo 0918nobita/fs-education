@@ -20,10 +20,12 @@ let siteName = "プログラミングをはじめよう"
 
 let outDir = "build"
 
-let commonMetaTags =
+let commonTags =
     [ meta [ _charset "utf-8" ]
       meta [ _name "viewport"
-             _content "width=device-width,initial-scale=1" ] ]
+             _content "width=device-width,initial-scale=1" ]
+      link [ _rel "stylesheet"
+             _href "style.css" ] ]
 
 let genSinglePageInfoAsync (markdownPath: string) =
     asyncResult {
@@ -61,7 +63,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
             html [] [
                 head
                     []
-                    (commonMetaTags
+                    (commonTags
                      @ [ title [] [
                              str $"%s{pageTitle} | %s{siteName}"
                          ] ])
@@ -99,7 +101,7 @@ let writeIndexPageAsync (pages: PageInfo seq) =
     async {
         let content =
             html [] [
-                head [] (commonMetaTags @ [ title [] [ str siteName ] ])
+                head [] (commonTags @ [ title [] [ str siteName ] ])
                 body [] [
                     h1 [] [ str siteName ]
                     ul [] liNodes
@@ -121,14 +123,13 @@ let resultSequence2 (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
         (Ok Seq.empty)
 
 let () =
-    Directory.CreateDirectory outDir |> ignore
-
     let res =
         Directory.EnumerateFiles "pages"
         |> Seq.map genSinglePageInfoAsync
         |> Async.Parallel
         |> Async.RunSynchronously
         |> resultSequence2
+        |> Result.map (Seq.sortBy (fun pageInfo -> pageInfo.PageNumber))
 
     match res with
     | Ok (pages) ->
