@@ -18,6 +18,8 @@ type PageInfo =
 
 let siteName = "プログラミングをはじめよう"
 
+let outDir = "build"
+
 let commonMetaTags =
     [ meta [ _charset "utf-8" ]
       meta [ _name "viewport"
@@ -37,7 +39,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
         let pageNumber = int groups.[1].Value
 
         let htmlFileName = $"%s{baseName}.html"
-        let htmlPath = Path.Combine("build", htmlFileName)
+        let htmlPath = Path.Combine(outDir, htmlFileName)
         let markdownText = File.ReadAllText markdownPath
         let markdownAst = Markdown.Parse markdownText
 
@@ -104,10 +106,10 @@ let writeIndexPageAsync (pages: PageInfo seq) =
                 ]
             ]
 
-        File.WriteAllText("build/index.html", RenderView.AsString.htmlDocument content)
+        File.WriteAllText(Path.Combine(outDir, "index.html"), RenderView.AsString.htmlDocument content)
     }
 
-let sumResultSeq (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
+let resultSequence2 (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
     resSeq
     |> Seq.fold
         (fun s a ->
@@ -119,14 +121,14 @@ let sumResultSeq (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
         (Ok Seq.empty)
 
 let () =
-    Directory.CreateDirectory "build" |> ignore
+    Directory.CreateDirectory outDir |> ignore
 
     let res =
         Directory.EnumerateFiles "pages"
         |> Seq.map genSinglePageInfoAsync
         |> Async.Parallel
         |> Async.RunSynchronously
-        |> sumResultSeq
+        |> resultSequence2
 
     match res with
     | Ok (pages) ->
