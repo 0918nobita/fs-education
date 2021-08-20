@@ -5,3 +5,9 @@
 [こちら](https://dotnet.microsoft.com/download/dotnet/5.0) から .NET 5 SDK のインストーラをダウンロードしてください。
 
 ![.NET 5 SDK インストーラのダウンロードページ](images/dotnet5-dl.png)
+
+## 準備が整っているか確認しよう
+
+```bash
+dotnet --version
+```
