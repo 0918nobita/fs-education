@@ -5,3 +5,11 @@
 img {
     width: 100%;
 }
+
+.word {
+    display: inline-block;
+}
+
+.code-wrapper {
+    overflow-x: auto;
+}

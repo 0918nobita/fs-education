@@ -27,6 +27,51 @@ let commonTags =
       link [ _rel "stylesheet"
              _href "style.css" ] ]
 
+type CodeBlockRenderer() =
+    inherit Renderers.Html.HtmlObjectRenderer<Syntax.CodeBlock>()
+
+    override _.Write(renderer: Renderers.HtmlRenderer, obj: Syntax.CodeBlock) : unit =
+        renderer.EnsureLine() |> ignore
+        let fencedCodeBlock = obj :?> Syntax.FencedCodeBlock
+
+        if
+            not (isNull fencedCodeBlock)
+            && not (isNull fencedCodeBlock.Info)
+        then
+            renderer.Write("<div class=\"code-wrapper\"><pre><code>")
+            |> ignore
+
+            renderer.WriteLeafRawLines(fencedCodeBlock, true, true)
+            |> ignore
+
+            renderer.Write("</code></pre></div>") |> ignore
+
+type MyExtension() =
+    interface IMarkdownExtension with
+        member _.Setup(pipeline: MarkdownPipelineBuilder) = ()
+
+        member _.Setup(pipeline: MarkdownPipeline, renderer: Renderers.IMarkdownRenderer) =
+            let htmlRenderer = renderer :?> Renderers.HtmlRenderer
+
+            if isNull htmlRenderer
+               || isNull htmlRenderer.ObjectRenderers then
+                ()
+            else
+                let objRenderers = htmlRenderer.ObjectRenderers
+
+                objRenderers.RemoveAll(fun a -> a :? Renderers.Html.CodeBlockRenderer)
+                |> ignore
+
+                objRenderers.Add <| CodeBlockRenderer()
+
+type MarkdownPipelineBuilder with
+    member this.UseMyExtension() =
+        this.Extensions.Add(MyExtension())
+        this
+
+let pipeline =
+    MarkdownPipelineBuilder().UseMyExtension().Build()
+
 let genSinglePageInfoAsync (markdownPath: string) =
     asyncResult {
         let baseName =
@@ -68,7 +113,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
                              str $"%s{pageTitle} | %s{siteName}"
                          ] ])
                 body [] [
-                    rawText (Markdown.ToHtml markdownAst)
+                    rawText (Markdown.ToHtml(markdownAst, pipeline))
                 ]
             ]
 
@@ -103,7 +148,11 @@ let writeIndexPageAsync (pages: PageInfo seq) =
             html [] [
                 head [] (commonTags @ [ title [] [ str siteName ] ])
                 body [] [
-                    h1 [] [ str siteName ]
+                    h1 [] [
+                        span [ _class "word" ] [ str "プログラミング" ]
+                        span [ _class "word" ] [ str "を" ]
+                        span [ _class "word" ] [ str "はじめよう" ]
+                    ]
                     ul [] liNodes
                 ]
             ]
@@ -132,7 +181,7 @@ let () =
         |> Result.map (Seq.sortBy (fun pageInfo -> pageInfo.PageNumber))
 
     match res with
-    | Ok (pages) ->
+    | Ok pages ->
         pages
         |> Seq.map writePageAsync
         |> Seq.toList
@@ -140,6 +189,6 @@ let () =
         |> Async.Parallel
         |> Async.RunSynchronously
         |> ignore
-    | Error (msgs) ->
+    | Error msgs ->
         msgs |> Seq.iter (eprintfn "%s")
         exit 1
