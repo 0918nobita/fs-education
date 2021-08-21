@@ -6,10 +6,32 @@ img {
     width: 100%;
 }
 
+a {
+    color: black;
+}
+
 .word {
     display: inline-block;
 }
 
 .code-wrapper {
     overflow-x: auto;
+    padding: 0.25rem 1rem;
+    background-color: #F6F7F6;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #161923;
+        color: #BCBDD0;
+    }
+
+    a {
+        color: #BCBDD0;
+    }
+
+    .code-wrapper {
+        color: #C5C8C6;
+        background-color: #1D1F21;
+    }
 }
