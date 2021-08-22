@@ -14,10 +14,20 @@ a {
     display: inline-block;
 }
 
-.code-wrapper {
+.code-outer {
     overflow-x: auto;
-    padding: 0.25rem 1rem;
     background-color: #F6F7F6;
+}
+
+.code-inner {
+    display: flex;
+    padding-top: 0.25rem;
+    padding-left: 1rem;
+}
+
+.code-padding-right {
+    display: block;
+    padding-left: 1rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,7 +40,7 @@ a {
         color: #BCBDD0;
     }
 
-    .code-wrapper {
+    .code-outer {
         color: #C5C8C6;
         background-color: #1D1F21;
     }
