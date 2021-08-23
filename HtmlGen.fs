@@ -51,7 +51,7 @@ let rec mdParagraphToHtml (paragraph: MarkdownParagraph) : option<list<XmlNode>>
     | ListBlock (kind = Ordered; items = items) ->
         items
         |> List.collect (List.choose mdParagraphToHtml)
-        |> List.concat
+        |> List.map (li [])
         |> ol []
         |> List.singleton
         |> Some
