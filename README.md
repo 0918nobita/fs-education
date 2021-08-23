@@ -9,5 +9,5 @@
 ↓のコマンドを実行すると、 ``/build`` ディレクトリ内に HTML ファイルが生成されます
 
 ```bash
-dotnet fsi build.fsx
+dotnet run
 ```
