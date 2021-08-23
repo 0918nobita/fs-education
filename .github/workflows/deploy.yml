@@ -15,9 +15,9 @@ jobs:
         with:
           dotnet-version: '5.0.x'
       - run: dotnet run
-      - uses: netlify/actions/cli@master
+      - uses: amondnet/vercel-action@v20
         with:
-          args: deploy --dir=build --prod
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-args: '--prod'
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
