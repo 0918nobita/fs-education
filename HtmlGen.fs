@@ -1,40 +1,64 @@
 module HtmlGen
 
+open Giraffe.ViewEngine
 open FSharp.Formatting.Markdown
 
-let rec private mdSpanToHtml (span: MarkdownSpan) : string =
+let rec mdSpanToHtml (span: MarkdownSpan) : XmlNode option =
     match span with
-    | Literal (text = text) -> text
-    | Strong (body = body) ->
+    | Literal (text = text) -> Some(rawText text)
+    | Strong (body = body) -> body |> List.choose mdSpanToHtml |> b [] |> Some
+    | DirectImage (body = body; link = link) -> Some(img [ _src link; _alt body ])
+    | DirectLink (body = body; link = link) ->
         body
-        |> List.map mdSpanToHtml
-        |> String.concat ""
-        |> sprintf "<b>%s</b>"
-    | _ -> ""
+        |> List.choose mdSpanToHtml
+        |> a [ _href link ]
+        |> Some
+    | _ ->
+        eprintfn "skipped:"
+        eprintfn "%A" span
+        None
 
-let rec private mdParagraphToHtml (paragraph: MarkdownParagraph) : string =
+let rec mdParagraphToHtml (paragraph: MarkdownParagraph) : option<list<XmlNode>> =
     match paragraph with
-    | Heading (size = size; body = [ Literal (text = text) ]) -> $"<h%i{size}>%s{text}</h%i{size}>"
+    | Heading (size = size; body = body) ->
+        let tag =
+            match size with
+            | 1 -> h1
+            | 2 -> h2
+            | 3 -> h3
+            | _ -> failwith "Unsupported heading"
+
+        body
+        |> List.choose mdSpanToHtml
+        |> tag []
+        |> List.singleton
+        |> Some
     | Paragraph (body = body) ->
         body
-        |> List.map mdSpanToHtml
-        |> String.concat ""
-        |> sprintf "<p>%s</p>"
-    | CodeBlock (code = code) ->
-        $"<div class=\"code-outer\"><div class=\"code-inner\"><pre><code>%s{code}</code></pre><div class=\"code-padding-right\"></div></div></div>"
+        |> List.choose mdSpanToHtml
+        |> p []
+        |> List.singleton
+        |> Some
+    | CodeBlock (code = codeText) ->
+        div [ _class "code-outer" ] [
+            div [ _class "code-inner" ] [
+                pre [] [ code [] [ str codeText ] ]
+                div [ _class "code-padding-right" ] []
+            ]
+        ]
+        |> List.singleton
+        |> Some
     | ListBlock (kind = Ordered; items = items) ->
         items
-        |> List.map (
-            List.map mdParagraphToHtml
-            >> String.concat ""
-            >> sprintf "<li>%s</li>"
-        )
-        |> String.concat ""
-        |> sprintf "<ol>%s</ol>"
-    | Span (body = spans) -> spans |> List.map mdSpanToHtml |> String.concat ""
-    | _ -> ""
+        |> List.collect (List.choose mdParagraphToHtml)
+        |> List.concat
+        |> ol []
+        |> List.singleton
+        |> Some
+    | Span (body = spans) -> spans |> List.choose mdSpanToHtml |> Some
+    | _ -> None
 
-let mdDocToHtml (doc: MarkdownDocument) : string =
+let mdDocToHtml (doc: MarkdownDocument) : XmlNode list =
     doc.Paragraphs
-    |> List.map mdParagraphToHtml
-    |> String.concat "\n"
+    |> List.choose mdParagraphToHtml
+    |> List.concat

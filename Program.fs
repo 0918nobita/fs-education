@@ -82,7 +82,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
                      @ [ title [] [
                              str $"%s{pageTitle} | %s{siteName}"
                          ] ])
-                body [] [ rawText htmlContent ]
+                body [] htmlContent
             ]
 
         return
