@@ -32,16 +32,16 @@ a {
 
 @media (prefers-color-scheme: dark) {
     body {
-        background-color: #161923;
-        color: #BCBDD0;
+        background-color: #1C2128;
+        color: #ADBAC7;
     }
 
     a {
-        color: #BCBDD0;
+        color: #ADBAC7;
     }
 
     .code-outer {
-        color: #C5C8C6;
-        background-color: #1D1F21;
+        color: #ADBAC7;
+        background-color: #2D333B;
     }
 }
