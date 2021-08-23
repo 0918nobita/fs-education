@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="HtmlGen.fsi" />
     <Compile Include="HtmlGen.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
