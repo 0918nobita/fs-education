@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>fs_education</RootNamespace>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
+    <NoWarn>NU1605;$(NoWarn)</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="HtmlGen.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Formatting" Version="11.4.3" />
+    <PackageReference Include="FsToolkit.ErrorHandling" Version="2.7.0" />
+    <PackageReference Include="Giraffe.ViewEngine" Version="1.4.0" />
+    <PackageReference Include="YamlDotNet" Version="11.2.1" />
+  </ItemGroup>
+</Project>
