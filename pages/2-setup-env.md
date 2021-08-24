@@ -12,6 +12,10 @@ title: 準備
 
 ## 準備が整っているか確認しよう
 
+Windows の場合は「PowerShell」を、macOS の場合は「ターミナル」を起動して、
+
 ```bash
 dotnet --version
 ```
+
+を入力し、エンターキーを押してください。
