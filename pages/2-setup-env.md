@@ -39,3 +39,8 @@ dotnet --version
 ## <span class="word">サンプルプログラム</span>の<span class="word">入手</span>・<span class="word">Visual Studio Code</span> <span class="word">拡張機能</span>の<span class="word">導入</span>
 
 <!-- [こちら](...) からサンプルプログラムを入手してください -->
+
+以下の拡張機能がまとめてインストールされます。
+
+1. ionide-fsharp
+2. .NET Interactive Notebooks
