@@ -118,7 +118,7 @@ let writeIndexPageAsync (pages: PageInfo seq) =
                 body [] [
                     h1 [] [
                         span [ _class "word" ] [ str "プログラミング" ]
-                        span [ _class "word" ] [ str "を" ]
+                        str "を"
                         span [ _class "word" ] [ str "はじめよう" ]
                     ]
                     ul [] liNodes

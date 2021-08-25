@@ -2,7 +2,7 @@
 title: シェルを使ってみよう
 ---
 
-# <span class="word">シェル</span><span class="word">を</span><span class="word">使ってみよう</span>
+# <span class="word">シェル</span>を<span class="word">使ってみよう</span>
 
 ブラウザで Web ページを閲覧する・電子メールを送受信する・文書を作成する等、普段はパソコンを用いる際は
 

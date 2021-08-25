@@ -4,7 +4,7 @@ title: 準備
 
 # 準備
 
-## .NET 5.0 SDK のインストール
+## <span class="word">.NET 5.0 SDK</span> の<span class="word">インストール</span>
 
 <!-- TODO: .NET 5.0 SDK の導入手順をもっと丁寧に説明する -->
 
@@ -26,16 +26,16 @@ dotnet --version
 
 のように `.` (ピリオド) で区切られた数が表示されたら、 .NET 5.0 SDK のインストールに成功しています！
 
-## Visual Studio Code のインストール
+## <span class="word">Visual Studio Code</span> の<span class="word">インストール</span>
 
 [こちら](https://code.visualstudio.com/download) から Visual Studio Code のインストーラをダウンロードしてください。
 
 <!-- スクリーンショットを貼る -->
 
-## Visual Studio Code を起動してみる
+## <span class="word">Visual Studio Code</span> を<span class="word">起動してみる</span>
 
 <!-- スクリーンショットを貼る -->
 
-## サンプルプログラムの入手・Visual Studio Code 拡張機能の導入
+## <span class="word">サンプルプログラム</span>の<span class="word">入手</span>・<span class="word">Visual Studio Code</span> <span class="word">拡張機能</span>の<span class="word">導入</span>
 
 <!-- [こちら](...) からサンプルプログラムを入手してください -->
