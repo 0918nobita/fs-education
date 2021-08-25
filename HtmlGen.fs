@@ -3,8 +3,8 @@ module HtmlGen
 open Giraffe.ViewEngine
 open FSharp.Formatting.Markdown
 
-let rec mdSpanToHtml (span: MarkdownSpan) : XmlNode option =
-    match span with
+let rec mdSpanToHtml (mdSpan: MarkdownSpan) : XmlNode option =
+    match mdSpan with
     | Literal (text = text) -> Some(rawText text)
     | Strong (body = body) -> body |> List.choose mdSpanToHtml |> b [] |> Some
     | DirectImage (body = body; link = link) -> Some(img [ _src link; _alt body ])
@@ -13,6 +13,12 @@ let rec mdSpanToHtml (span: MarkdownSpan) : XmlNode option =
         |> List.choose mdSpanToHtml
         |> a [ _href link ]
         |> Some
+    | InlineCode (code = codeText) ->
+        Some(
+            span [ _class "inline-code" ] [
+                code [] [ str codeText ]
+            ]
+        )
     | _ ->
         eprintfn "skipped:"
         eprintfn "%A" span
