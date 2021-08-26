@@ -46,6 +46,11 @@ img {
     width: 100%;
 }
 
+#container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --text-color: #ADBAC7;

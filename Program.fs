@@ -82,7 +82,9 @@ let genSinglePageInfoAsync (markdownPath: string) =
                      @ [ title [] [
                              str $"%s{pageTitle} | %s{siteName}"
                          ] ])
-                body [] htmlContent
+                body [] [
+                    div [ _id "container" ] htmlContent
+                ]
             ]
 
         return
@@ -116,12 +118,14 @@ let writeIndexPageAsync (pages: PageInfo seq) =
             html [] [
                 head [] (commonTags @ [ title [] [ str siteName ] ])
                 body [] [
-                    h1 [] [
-                        span [ _class "word" ] [ str "プログラミング" ]
-                        str "を"
-                        span [ _class "word" ] [ str "はじめよう" ]
+                    div [ _id "container" ] [
+                        h1 [] [
+                            span [ _class "word" ] [ str "プログラミング" ]
+                            str "を"
+                            span [ _class "word" ] [ str "はじめよう" ]
+                        ]
+                        ul [] liNodes
                     ]
-                    ul [] liNodes
                 ]
             ]
 
