@@ -10,7 +10,7 @@ title: 準備
 
 [こちら](https://dotnet.microsoft.com/download/dotnet/5.0) から .NET 5.0 SDK のインストーラをダウンロードしてください。
 
-![.NET 5.0 SDK インストーラのダウンロードページ](images/dotnet5-dl.png)
+![.NET 5.0 SDK インストーラのダウンロードページ](https://user-images.githubusercontent.com/8453302/131018013-36a85a5a-9240-46a4-99ed-e0e1ce03c1d7.png)
 
 Windows の場合は「PowerShell」を、macOS の場合は「ターミナル」を起動して、
 
@@ -36,10 +36,14 @@ dotnet --version
 
 <!-- スクリーンショットを貼る -->
 
-## <span class="word">サンプルプログラム</span>の<span class="word">入手</span>・<span class="word">VS Code</span> <span class="word">拡張機能</span>の<span class="word">導入</span>
+## <span class="word">サンプルプログラム</span>の<span class="word">入手</span>
 
-[こちら](https://github.com/0918nobita/fs-edu-materials/archive/refs/heads/main.zip) からサンプルプログラムを入手してください。それを VS Code で開くと、以下の拡張機能をインストールするようにサジェストされます。続行してすべてインストールしてください。
+[こちら](https://github.com/0918nobita/fs-edu-materials/archive/refs/heads/main.zip) からサンプルプログラムを入手してください。zip 形式の圧縮ファイルでダウンロードされるので、適当な場所に解凍して使ってください。
+
+## <span class="word">VS Code</span> <span class="word">拡張機能</span>の<span class="word">導入</span>
 
 1. ionide-fsharp
 2. .NET Interactive Notebooks
 3. EditorConfig for VS Code
+
+上記の VS Code 拡張機能をインストールしてください。環境によっては、サンプルプログラムを VS Code で開いた際に、これらをインストールするように勧める文章と、まとめてインストールするためのボタンが表示されるかもしれません。それを選択して自動でこれらをインストールしても大丈夫です。
