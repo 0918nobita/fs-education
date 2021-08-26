@@ -36,11 +36,21 @@ type PageInfo =
       Title: string
       HtmlContent: XmlNode }
 
+let baseUrl = "https://fs-education.vercel.app"
 let siteName = "プログラミングをはじめよう"
+let siteDescription = "これから趣味でプログラミングを始めようとしている人のためのテキスト"
 let outDir = "build"
 
 let commonTags =
     [ meta [ _charset "utf-8" ]
+      meta [ _name "description"
+             _content siteDescription ]
+      meta [ _property "og:locale"
+             _content "ja_JP" ]
+      meta [ _property "og:description"
+             _content siteDescription ]
+      meta [ _name "twitter:card"
+             _content "summary" ]
       meta [ _name "viewport"
              _content "width=device-width,initial-scale=1" ]
       link [ _rel "stylesheet"
@@ -74,14 +84,20 @@ let genSinglePageInfoAsync (markdownPath: string) =
             | Some (title) -> title
             | None -> failwith "Failed to get title"
 
+        let detailedPageTitle = $"%s{pageTitle} | %s{siteName}"
+
         let htmlContent =
             html [ _lang "ja" ] [
                 head
                     []
                     (commonTags
-                     @ [ title [] [
-                             str $"%s{pageTitle} | %s{siteName}"
-                         ] ])
+                     @ [ title [] [ str detailedPageTitle ]
+                         meta [ _property "og:title"
+                                _content detailedPageTitle ]
+                         meta [ _property "og:type"
+                                _content "article" ]
+                         meta [ _property "og:url"
+                                _content $"%s{baseUrl}/%s{htmlFileName}" ] ])
                 body [] [
                     div [ _id "container" ] htmlContent
                 ]
@@ -116,7 +132,16 @@ let writeIndexPageAsync (pages: PageInfo seq) =
     async {
         let content =
             html [ _lang "ja" ] [
-                head [] (commonTags @ [ title [] [ str siteName ] ])
+                head
+                    []
+                    (commonTags
+                     @ [ title [] [ str siteName ]
+                         meta [ _property "og:title"
+                                _content siteName ]
+                         meta [ _property "og:type"
+                                _content "website" ]
+                         meta [ _property "org:url"
+                                _content baseUrl ] ])
                 body [] [
                     div [ _id "container" ] [
                         h1 [] [
