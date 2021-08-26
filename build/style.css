@@ -7,6 +7,7 @@
     box-sizing: border-box;
     color: var(--text-color);
     font-family: -apple-system,"BlinkMacSystemFont","Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,sans-serif,"Segoe UI Emoji";
+    line-height: 1.5;
 }
 
 a {
