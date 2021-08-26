@@ -6,6 +6,7 @@
     "icons": [],
     "lang": "ja",
     "theme_color": "#C000C7",
+    "background_color": "#C000C7",
     "description": "これから趣味でプログラミングを始めようとしている人のためのテキスト",
     "categories": ["books", "education"]
 }
