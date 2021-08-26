@@ -75,7 +75,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
             | None -> failwith "Failed to get title"
 
         let htmlContent =
-            html [] [
+            html [ _lang "ja" ] [
                 head
                     []
                     (commonTags
@@ -115,7 +115,7 @@ let writeIndexPageAsync (pages: PageInfo seq) =
 
     async {
         let content =
-            html [] [
+            html [ _lang "ja" ] [
                 head [] (commonTags @ [ title [] [ str siteName ] ])
                 body [] [
                     div [ _id "container" ] [
