@@ -38,7 +38,8 @@ dotnet --version
 
 ## <span class="word">サンプルプログラム</span>の<span class="word">入手</span>・<span class="word">VS Code</span> <span class="word">拡張機能</span>の<span class="word">導入</span>
 
-[こちら](https://github.com/0918nobita/fs-education) からサンプルプログラムを入手してください。それを VS Code で開くと、以下の拡張機能をインストールするようにサジェストされます。続行してすべてインストールしてください。
+[こちら](https://github.com/0918nobita/fs-edu-materials/archive/refs/heads/main.zip) からサンプルプログラムを入手してください。それを VS Code で開くと、以下の拡張機能をインストールするようにサジェストされます。続行してすべてインストールしてください。
 
 1. ionide-fsharp
 2. .NET Interactive Notebooks
+3. EditorConfig for VS Code
