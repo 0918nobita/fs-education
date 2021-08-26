@@ -28,7 +28,7 @@ dotnet --version
 
 ## <span class="word">VS Code</span> の<span class="word">インストール</span>
 
-[こちら](https://code.visualstudio.com/download) から Visual Studio Code (以外、VS Code) のインストーラをダウンロードしてください。
+[こちら](https://code.visualstudio.com/download) から Visual Studio Code (以下、VS Code) のインストーラをダウンロードしてください。
 
 <!-- スクリーンショットを貼る -->
 
