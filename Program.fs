@@ -54,7 +54,9 @@ let commonTags =
       meta [ _name "viewport"
              _content "width=device-width,initial-scale=1" ]
       link [ _rel "stylesheet"
-             _href "style.css" ] ]
+             _href "style.css" ]
+      link [ _rel "manifest"
+             _href "manifest.json" ] ]
 
 let genSinglePageInfoAsync (markdownPath: string) =
     asyncResult {
@@ -75,7 +77,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
         let markdownDoc =
             Markdown.Parse(File.ReadAllText markdownPath, "\n", MarkdownParseOptions.AllowYamlFrontMatter)
 
-        let htmlContent = HtmlGen.mdDocToHtml markdownDoc
+        let pageContent = HtmlGen.mdDocToHtml markdownDoc
 
         let pageTitle =
             match markdownDoc
@@ -99,7 +101,7 @@ let genSinglePageInfoAsync (markdownPath: string) =
                          meta [ _property "og:url"
                                 _content $"%s{baseUrl}/%s{htmlFileName}" ] ])
                 body [] [
-                    div [ _id "container" ] htmlContent
+                    div [ _id "container" ] pageContent
                 ]
             ]
 

@@ -1,0 +1,11 @@
+{
+    "name": "プログラミングをはじめよう",
+    "short_name": "ﾌﾟﾛｸﾞﾗﾐﾝｸﾞをはじめよう",
+    "start_url": "https://fs-education.vercel.app",
+    "display": "standalone",
+    "icons": [],
+    "lang": "ja",
+    "theme_color": "#C000C7",
+    "description": "これから趣味でプログラミングを始めようとしている人のためのテキスト",
+    "categories": ["books", "education"]
+}
