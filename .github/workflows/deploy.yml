@@ -14,7 +14,12 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '5.0.x'
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.13.0
+      - run: dotnet restore
       - run: dotnet run
+        working-directory: packages/ssg
       - uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}

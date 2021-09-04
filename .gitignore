@@ -1,9 +1,1 @@
-.fable/
-bin/
-obj/
-node_modules/
-dist/
-
-/build/*.html
-
 .vercel

@@ -1,5 +1,6 @@
 module Prgoram
 
+open System.Diagnostics
 open System.IO
 open System.Text.RegularExpressions
 open FSharp.Formatting.Markdown
@@ -156,6 +157,7 @@ let writeIndexPageAsync (pages: PageInfo seq) =
                         ]
                         ul [] liNodes
                     ]
+                    script [ _src "bundle.js" ] []
                 ]
             ]
 
@@ -173,8 +175,40 @@ let resultSequence2 (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
             | Error es, Error e -> Error(Seq.append es (Seq.singleton e)))
         (Ok Seq.empty)
 
+let exec (cmd: string) (args: string list) (workingDirectory: string) : Result<string, string> =
+    use p = new Process()
+    p.StartInfo.FileName <- cmd
+    p.StartInfo.Arguments <- String.concat " " args
+    p.StartInfo.RedirectStandardOutput <- true
+    p.StartInfo.WorkingDirectory <- workingDirectory
+
+    try
+        p.Start() |> ignore
+        p.StandardOutput.ReadToEnd() |> Ok
+    with
+    | e -> Error e.Message
+
 [<EntryPoint>]
-let main argv =
+let main _ =
+    if not (Directory.Exists outDir) then
+        Directory.CreateDirectory outDir |> ignore
+
+    Directory.GetFiles "assets"
+    |> Array.map (fun assetPath -> async { File.Copy (assetPath, Path.Combine(outDir, Path.GetFileName assetPath), true) })
+    |> Async.Parallel
+    |> Async.RunSynchronously
+    |> ignore
+
+    result {
+        let! installOutput = exec "pnpm" ["install"] "../frontend"
+        printfn "%s" installOutput
+        let! buildOutput = exec "pnpm" ["run"; "build"] "../frontend"
+        printfn "%s" buildOutput
+    }
+    |> Result.defaultWith (fun () -> failwith "Failed to build frontend")
+
+    File.Copy ("../frontend/dist/bundle.js", "./build/bundle.js", true)
+
     let res =
         Directory.EnumerateFiles "pages"
         |> Seq.map genSinglePageInfoAsync

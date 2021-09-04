@@ -3,7 +3,7 @@
     "author": "Kodai Matsumoto <nobita.0918@gmail.com>",
     "license": "MIT",
     "scripts": {
-        "build": "fable-splitter frontend -o dist && esbuild dist/SW.js --bundle --minify --outfile=dist/bundle.js"
+        "build": "fable-splitter frontend.fsproj -o dist && esbuild dist/Program.js --bundle --minify --outfile=dist/bundle.js"
     },
     "devDependencies": {
         "esbuild": "^0.12.25",
