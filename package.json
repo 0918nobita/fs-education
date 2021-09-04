@@ -1,0 +1,13 @@
+{
+    "name": "@fs-education/frontend",
+    "author": "Kodai Matsumoto <nobita.0918@gmail.com>",
+    "license": "MIT",
+    "scripts": {
+        "build": "fable-splitter frontend -o dist && esbuild dist/SW.js --bundle --minify --outfile=dist/bundle.js"
+    },
+    "devDependencies": {
+        "esbuild": "^0.12.25",
+        "fable-compiler": "^2.13.0",
+        "fable-splitter": "^2.2.1"
+    }
+}
