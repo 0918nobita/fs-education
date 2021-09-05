@@ -59,8 +59,8 @@ let commonTags =
       link [ _rel "manifest"
              _href "manifest.json" ]
       link [ _rel "icon"
-             _href
-                 "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%%22 y=%2250%%22 style=%22dominant-baseline:central;text-anchor:middle;font-size:90px;%22>🔷</text></svg>" ] ]
+             _href "icon.svg"
+             _type "image/svg+xml" ] ]
 
 let genSinglePageInfoAsync (markdownPath: string) =
     asyncResult {
@@ -194,20 +194,21 @@ let main _ =
         Directory.CreateDirectory outDir |> ignore
 
     Directory.GetFiles "assets"
-    |> Array.map (fun assetPath -> async { File.Copy (assetPath, Path.Combine(outDir, Path.GetFileName assetPath), true) })
+    |> Array.map
+        (fun assetPath -> async { File.Copy(assetPath, Path.Combine(outDir, Path.GetFileName assetPath), true) })
     |> Async.Parallel
     |> Async.RunSynchronously
     |> ignore
 
     result {
-        let! installOutput = exec "pnpm" ["install"] "../frontend"
+        let! installOutput = exec "pnpm" [ "install" ] "../frontend"
         printfn "%s" installOutput
-        let! buildOutput = exec "pnpm" ["run"; "build"] "../frontend"
+        let! buildOutput = exec "pnpm" [ "run"; "build" ] "../frontend"
         printfn "%s" buildOutput
     }
     |> Result.defaultWith (fun () -> failwith "Failed to build frontend")
 
-    File.Copy ("../frontend/dist/bundle.js", "./build/bundle.js", true)
+    File.Copy("../frontend/dist/bundle.js", "./build/bundle.js", true)
 
     let res =
         Directory.EnumerateFiles "pages"

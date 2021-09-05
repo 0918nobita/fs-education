@@ -3,7 +3,14 @@
     "short_name": "ﾌﾟﾛｸﾞﾗﾐﾝｸﾞをはじめよう",
     "start_url": "https://fs-education.vercel.app",
     "display": "standalone",
-    "icons": [],
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
     "lang": "ja",
     "theme_color": "#C000C7",
     "background_color": "#C000C7",
