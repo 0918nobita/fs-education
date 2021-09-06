@@ -1,55 +1,25 @@
 module Prgoram
 
-open System.Diagnostics
 open System.IO
-open System.Text.RegularExpressions
-open FSharp.Formatting.Markdown
 open FsToolkit.ErrorHandling
-open YamlDotNet.Serialization
-
-let getMetaDataFromMdDoc (doc: MarkdownDocument) : Map<string, string> =
-    let desrializer =
-        DeserializerBuilder()
-            .WithNamingConvention(NamingConventions.CamelCaseNamingConvention.Instance)
-            .Build()
-
-    doc.Paragraphs
-    |> List.tryPick
-        (function
-        | YamlFrontmatter (yaml = yaml) ->
-            yaml
-            |> String.concat "\n"
-            |> desrializer.Deserialize<System.Collections.Generic.Dictionary<string, string>>
-            :> seq<_>
-            |> Seq.map (|KeyValue|)
-            |> Map.ofSeq
-            |> Some
-        | _ -> None)
-    |> Option.defaultValue Map.empty
-
 open Giraffe.ViewEngine
 
-type PageInfo =
-    { PageNumber: int
-      MarkdownPath: string
-      HtmlPath: string
-      PublicPath: string
-      Title: string
-      HtmlContent: XmlNode }
+open SiteInfo
 
-let baseUrl = "https://fs-education.vercel.app"
-let siteName = "プログラミングをはじめよう"
-let siteDescription = "これから趣味でプログラミングを始めようとしている人のためのテキスト"
-let outDir = "build"
+let siteInfo =
+    { Name = "プログラミングをはじめよう"
+      Description = "これから趣味でプログラミングを始めようとしている人のためのテキスト"
+      BaseUrl = "https://fs-education.vercel.app"
+      OutDir = "build" }
 
-let commonTags =
+let baseMetadataTags =
     [ meta [ _charset "utf-8" ]
       meta [ _name "description"
-             _content siteDescription ]
+             _content siteInfo.Description ]
       meta [ _property "og:locale"
              _content "ja_JP" ]
       meta [ _property "og:description"
-             _content siteDescription ]
+             _content siteInfo.Description ]
       meta [ _name "twitter:card"
              _content "summary" ]
       meta [ _name "viewport"
@@ -62,148 +32,24 @@ let commonTags =
              _href "icon.svg"
              _type "image/svg+xml" ] ]
 
-let genSinglePageInfoAsync (markdownPath: string) =
-    asyncResult {
-        let baseName =
-            Path.GetFileNameWithoutExtension markdownPath
-
-        let groups =
-            (Regex("^([0-9]+)-").Match baseName).Groups
-
-        if Seq.length groups <> 2 then
-            return! Error $"%s{markdownPath}: The file name format is invalid"
-
-        let pageNumber = int groups.[1].Value
-
-        let htmlFileName = $"%s{baseName}.html"
-        let htmlPath = Path.Combine(outDir, htmlFileName)
-
-        let markdownDoc =
-            Markdown.Parse(File.ReadAllText markdownPath, "\n", MarkdownParseOptions.AllowYamlFrontMatter)
-
-        let pageContent = HtmlGen.mdDocToHtml markdownDoc
-
-        let pageTitle =
-            match markdownDoc
-                  |> getMetaDataFromMdDoc
-                  |> Map.tryFind "title" with
-            | Some (title) -> title
-            | None -> failwith "Failed to get title"
-
-        let detailedPageTitle = $"%s{pageTitle} | %s{siteName}"
-
-        let htmlContent =
-            html [ _lang "ja" ] [
-                head
-                    []
-                    (commonTags
-                     @ [ title [] [ str detailedPageTitle ]
-                         meta [ _property "og:title"
-                                _content detailedPageTitle ]
-                         meta [ _property "og:type"
-                                _content "article" ]
-                         meta [ _property "og:url"
-                                _content $"%s{baseUrl}/%s{htmlFileName}" ] ])
-                body [] [
-                    div [ _id "container" ] pageContent
-                ]
-            ]
-
-        return
-            { PageNumber = pageNumber
-              MarkdownPath = markdownPath
-              HtmlPath = htmlPath
-              PublicPath = htmlFileName
-              Title = pageTitle
-              HtmlContent = htmlContent }
-
-    }
-
-let writePageAsync (page: PageInfo) =
-    File.WriteAllTextAsync(page.HtmlPath, RenderView.AsString.htmlDocument page.HtmlContent)
-    |> Async.AwaitTask
-
-let writeIndexPageAsync (pages: PageInfo seq) =
-    let liNodes =
-        pages
-        |> Seq.toList
-        |> List.map
-            (fun page ->
-                li [] [
-                    a [ _href page.PublicPath ] [
-                        str page.Title
-                    ]
-                ])
-
-    async {
-        let content =
-            html [ _lang "ja" ] [
-                head
-                    []
-                    (commonTags
-                     @ [ title [] [ str siteName ]
-                         meta [ _property "og:title"
-                                _content siteName ]
-                         meta [ _property "og:type"
-                                _content "website" ]
-                         meta [ _property "org:url"
-                                _content baseUrl ] ])
-                body [] [
-                    div [ _id "container" ] [
-                        h1 [] [
-                            span [ _class "word" ] [ str "プログラミング" ]
-                            str "を"
-                            span [ _class "word" ] [ str "はじめよう" ]
-                        ]
-                        ul [] liNodes
-                    ]
-                    script [ _src "bundle.js" ] []
-                ]
-            ]
-
-        File.WriteAllText(Path.Combine(outDir, "index.html"), RenderView.AsString.htmlDocument content)
-    }
-
-let resultSequence2 (resSeq: seq<Result<'a, 'b>>) : Result<seq<'a>, seq<'b>> =
-    resSeq
-    |> Seq.fold
-        (fun s a ->
-            match s, a with
-            | Ok arr, Ok v -> Ok(Seq.append arr (Seq.singleton v))
-            | Ok _, Error e -> Error(Seq.singleton e)
-            | Error es, Ok _ -> Error es
-            | Error es, Error e -> Error(Seq.append es (Seq.singleton e)))
-        (Ok Seq.empty)
-
-let exec (cmd: string) (args: string list) (workingDirectory: string) : Result<string, string> =
-    use p = new Process()
-    p.StartInfo.FileName <- cmd
-    p.StartInfo.Arguments <- String.concat " " args
-    p.StartInfo.RedirectStandardOutput <- true
-    p.StartInfo.WorkingDirectory <- workingDirectory
-
-    try
-        p.Start() |> ignore
-        p.StandardOutput.ReadToEnd() |> Ok
-    with
-    | e -> Error e.Message
-
 [<EntryPoint>]
 let main _ =
-    if not (Directory.Exists outDir) then
-        Directory.CreateDirectory outDir |> ignore
+    if not (Directory.Exists siteInfo.OutDir) then
+        Directory.CreateDirectory siteInfo.OutDir
+        |> ignore
 
     Directory.GetFiles "assets"
     |> Array.map
-        (fun assetPath -> async { File.Copy(assetPath, Path.Combine(outDir, Path.GetFileName assetPath), true) })
+        (fun assetPath ->
+            async { File.Copy(assetPath, Path.Combine(siteInfo.OutDir, Path.GetFileName assetPath), true) })
     |> Async.Parallel
     |> Async.RunSynchronously
     |> ignore
 
     result {
-        let! installOutput = exec "pnpm" [ "install" ] "../frontend"
+        let! installOutput = Shell.exec "pnpm" [ "install" ] "../frontend"
         printfn "%s" installOutput
-        let! buildOutput = exec "pnpm" [ "run"; "build" ] "../frontend"
+        let! buildOutput = Shell.exec "pnpm" [ "run"; "build" ] "../frontend"
         printfn "%s" buildOutput
     }
     |> Result.defaultWith (fun () -> failwith "Failed to build frontend")
@@ -212,18 +58,18 @@ let main _ =
 
     let res =
         Directory.EnumerateFiles "pages"
-        |> Seq.map genSinglePageInfoAsync
+        |> Seq.map (PageInfo.fromMdAsync siteInfo baseMetadataTags)
         |> Async.Parallel
         |> Async.RunSynchronously
-        |> resultSequence2
+        |> ResultSeq.resultSequence2
         |> Result.map (Seq.sortBy (fun pageInfo -> pageInfo.PageNumber))
 
     match res with
     | Ok pages ->
         pages
-        |> Seq.map writePageAsync
+        |> Seq.map Page.writeAsync
         |> Seq.toList
-        |> List.append [ writeIndexPageAsync pages ]
+        |> List.append [ Page.writeIndexAsync siteInfo baseMetadataTags pages ]
         |> Async.Parallel
         |> Async.RunSynchronously
         |> ignore
